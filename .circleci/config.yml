@@ -1,7 +1,9 @@
 version: 2.1
 orbs:
   node: circleci/node@5.0.1
-jobs:
+  #Orbs are packages for different functionalities in circleCI
+  #Orbs are integration library to help CircleCI works its other toolchain
+jobs: #jobs within pipeline
   build:
     docker:
       - image: cimg/node:16.10
