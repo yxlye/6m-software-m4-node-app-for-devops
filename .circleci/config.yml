@@ -33,9 +33,9 @@ jobs:
       - checkout
       - docker/check
       - docker/build:
-          image: edisonzsq/education-space
+          image: yxlye/m4nodeapp
       - docker/push:
-          image: edisonzsq/education-space
+          image: yxlye/m4nodeapp
 
 workflows:
   simple_workflow:
