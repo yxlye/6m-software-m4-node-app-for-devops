@@ -10,9 +10,8 @@ jobs:
       - image: cimg/node:16.10
     steps:
       - checkout
-      - node/install-packages: #orbs approach
+      - node/install-packages:
           pkg-manager: npm
-          #cli approach
       - run: |
           echo Installing dependencies...”
           npm install
