@@ -1,18 +1,9 @@
+# using edison's code in order to do CD
+# my code is in exercise branch
 version: 2.1
-orbs: # import library
+orbs:
   node: circleci/node@5.0.1
-  docker: circleci/docker@1.5.0
-executors:
- docker-publisher: 
- environment:
- IMAGE_NAME: yxlye/m4nodeapp
- docker: # Each job requires specifying an executor
- # (either docker, macos, or machine), see
- — image: circleci/node:latest
- auth:
- username: $DOCKERHUB_USERNAME
- password: $DOCKERHUB_PASSWORD
-
+  docker: circleci/docker@2.1.4
 jobs:
   build:
     docker:
@@ -22,7 +13,7 @@ jobs:
       - node/install-packages:
           pkg-manager: npm
       - run: |
-          echo "Installing dependencies..."
+          echo Installing dependencies...”
           npm install
   test:
     docker:
@@ -32,20 +23,19 @@ jobs:
       - node/install-packages:
           pkg-manager: npm
       - run: |
-          echo "Running tests..."
+          echo “Running tests...”
           npm run test
-  publish:
-    executor: docker-publisher
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run: 
-          name: Publish Docker Image to Docker Hub
-          command: |
-          echo “$DOCKERHUB_PASSWORD” | docker login -u “$DOCKERHUB_USERNAME” — password-stdin
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME:latest
 
+  build-and-push:
+    executor: docker/docker
+    steps:
+      - setup_remote_docker
+      - checkout
+      - docker/check
+      - docker/build:
+          image: edisonzsq/education-space
+      - docker/push:
+          image: edisonzsq/education-space
 
 workflows:
   simple_workflow:
@@ -54,6 +44,6 @@ workflows:
       - test:
           requires:
             - build
-      - publish:
+      - build-and-push:
           requires:
             - test
