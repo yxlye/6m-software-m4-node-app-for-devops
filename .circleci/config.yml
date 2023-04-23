@@ -1,9 +1,10 @@
-# using edison's code in order to do CD
+# using reference from edison's code
 # my code is in exercise branch
 version: 2.1
 orbs:
   node: circleci/node@5.0.1
   docker: circleci/docker@2.1.4
+  heroku: circleci/heroku@2.0.0
 jobs:
   build:
     docker:
@@ -34,16 +35,49 @@ jobs:
       - docker/check
       - docker/build:
           image: yxlye/m4nodeapp
+          tag: <<pipeline.git.tag>>
       - docker/push:
           image: yxlye/m4nodeapp
+          tag: <<pipeline.git.tag>>
+
+  deploy:
+    docker:
+      - image: cimg/node:16.10
+    steps:
+      - setup_remote_docker
+      - heroku/install
+      - checkout
+      - run:
+          name: Heroku Container Push
+          command: |
+            heroku container:login
+            heroku container:push web -a yxlye-su-devops
+            heroku container:release web -a yxlye-su-devops
 
 workflows:
   simple_workflow:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              only: main
       - test:
           requires:
             - build
+          filters:
+            branches:
+              only: main
       - build-and-push:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - deploy:
           requires:
-            - test
+            - build-and-push
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
