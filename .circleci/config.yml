@@ -4,7 +4,8 @@ version: 2.1
 orbs:
   node: circleci/node@5.0.1
   docker: circleci/docker@2.1.4
-  heroku: circleci/heroku@2.0.0
+#  heroku: circleci/heroku@2.0.0
+  snyk: snyk/snyk@1.5.0
 jobs:
   build:
     docker:
@@ -26,6 +27,19 @@ jobs:
       - run: |
           echo “Running tests...”
           npm run test
+          
+  scan:
+    docker: 
+      - image: cimg/node:16.10
+    environment: 
+      IMAGE_NAME: yxlye/m4nodeapp
+    steps:
+      - checkout
+      - setup_remote_docker
+      - docker/check
+      - run: docker build -t $IMAGE_NAME .
+      - synk/scan:
+        docker-image-name: $IMAGE_NAME
 
   build-and-push:
     executor: docker/docker
@@ -40,19 +54,19 @@ jobs:
           image: yxlye/m4nodeapp
           tag: <<pipeline.git.tag>>
 
-  deploy:
-    docker:
-      - image: cimg/node:16.10
-    steps:
-      - setup_remote_docker
-      - heroku/install
-      - checkout
-      - run:
-          name: Heroku Container Push
-          command: |
-            heroku container:login
-            heroku container:push web -a yxlye-su-devops
-            heroku container:release web -a yxlye-su-devops
+#  deploy:
+ #   docker:
+  #    - image: cimg/node:16.10
+  #  steps:
+  #    - setup_remote_docker
+  #    - heroku/install
+  #    - checkout
+  #    - run:
+  #        name: Heroku Container Push
+  #        command: |
+  #          heroku container:login
+  #          heroku container:push web -a yxlye-su-devops
+  #          heroku container:release web -a yxlye-su-devops
 
 workflows:
   simple_workflow:
@@ -67,17 +81,24 @@ workflows:
           filters:
             branches:
               only: main
+      # scan job
+      - scan:
+          requires:
+            - build
+          filters:
+            branches:
+              only: main 
       - build-and-push:
           filters:
             tags:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - deploy:
-          requires:
-            - build-and-push
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+   #   - deploy:
+   #       requires:
+   #         - build-and-push
+   #       filters:
+   #         tags:
+   #           only: /^v.*/
+   #         branches:
+   #           ignore: /.*/
